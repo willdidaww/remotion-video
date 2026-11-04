@@ -12,7 +12,7 @@ import { Room } from "./assets/Room";
 import { Fridge } from "./assets/Fridge";
 import { PlugSocket } from "./assets/PlugSocket";
 import { Compressor } from "./assets/Compressor";
-import { ElectricFlow } from "./assets/ElectricFlow";
+import { ElectricFlowDown } from "./assets/ElectricFlow";
 import { KaraokeCaption } from "./overlays/KaraokeCaption";
 import { LabelBadge } from "./overlays/LabelBadge";
 import { Inset } from "./overlays/Inset";
@@ -80,10 +80,10 @@ const SceneHook: React.FC = () => {
 
   return (
     <AbsoluteFill style={centered}>
-      <div style={{ transform: `scale(${scale})`, marginBottom: 40 }}>
-        <Fridge width={340} doorOpen={0} />
+      <div style={{ transform: `scale(${scale})`, marginTop: -120 }}>
+        <Fridge width={460} doorOpen={0} />
       </div>
-      <div style={{ position: "absolute", bottom: 360, left: 0, right: 0, display: "flex", justifyContent: "center" }}>
+      <div style={{ position: "absolute", bottom: 440, left: 0, right: 0, display: "flex", justifyContent: "center" }}>
         <LabelBadge text="JANGAN LANGSUNG DICOLOK!" variant="danger" fontSize={42} delay={8} />
       </div>
       <TitleBelow text="Kulkas baru dipindah?" sub="Tunggu dulu sebelum menyalakannya." />
@@ -99,15 +99,20 @@ const ScenePlug: React.FC = () => {
 
   return (
     <AbsoluteFill style={centered}>
-      <div style={{ marginBottom: 60 }}>
-        <PlugSocket width={420} inserted={inserted} />
+      {/* Colokan + steker di atas */}
+      <div style={{ position: "absolute", top: 520 }}>
+        <PlugSocket width={620} inserted={inserted} spark />
       </div>
-      {/* Listrik mulai mengalir setelah tercolok */}
+      {/* Listrik mengalir turun dari colokan ke bawah (menuju kompresor) */}
       <Sequence from={Math.round(fps * 1.5)}>
-        <div style={{ position: "absolute", top: "40%", left: 0, right: 0, display: "flex", justifyContent: "center" }}>
-          <ElectricFlow width={520} height={160} count={7} speed={1.6} />
+        <div style={{ position: "absolute", top: 760, left: 0, right: 0, display: "flex", justifyContent: "center" }}>
+          <ElectricFlowDown width={240} height={560} count={9} speed={1.8} />
         </div>
       </Sequence>
+      {/* Ikon kompresor kecil sebagai tujuan aliran */}
+      <div style={{ position: "absolute", top: 1240, left: 0, right: 0, display: "flex", justifyContent: "center", opacity: inserted > 0.9 ? 1 : 0.3 }}>
+        <Compressor width={240} motorRotation={frame * 3} oilLevel={0} />
+      </div>
       <TitleBelow text="Begitu dicolok..." sub="listrik langsung mengalir ke kompresor." />
     </AbsoluteFill>
   );
@@ -122,15 +127,15 @@ const SceneCompressor: React.FC = () => {
 
   return (
     <AbsoluteFill style={centered}>
-      <div style={{ transform: `scale(${zoom})`, marginTop: -60 }}>
-        <Compressor width={520} motorRotation={rotation} oilLevel={0} />
+      <div style={{ transform: `scale(${zoom})`, marginTop: -160 }}>
+        <Compressor width={620} motorRotation={rotation} oilLevel={0} />
       </div>
 
       {/* Label di sekitar kompresor */}
-      <div style={{ position: "absolute", top: 180, left: 60 }}>
+      <div style={{ position: "absolute", top: 150, left: 50 }}>
         <LabelBadge text="MOTOR LANGSUNG BEKERJA" delay={6} fontSize={30} />
       </div>
-      <div style={{ position: "absolute", top: 180, right: 60 }}>
+      <div style={{ position: "absolute", top: 150, right: 50 }}>
         <Inset title="GERAK CEPAT" delay={14} width={240} height={180}>
           <MiniGauge />
         </Inset>
@@ -156,18 +161,18 @@ const SceneOil: React.FC = () => {
 
   return (
     <AbsoluteFill style={centered}>
-      <div style={{ marginTop: -60 }}>
-        <Compressor width={520} motorRotation={rotation} oilLevel={oilLevel} />
+      <div style={{ marginTop: -140 }}>
+        <Compressor width={620} motorRotation={rotation} oilLevel={oilLevel} />
       </div>
 
-      <div style={{ position: "absolute", top: 160, left: 0, right: 0, display: "flex", justifyContent: "center" }}>
+      <div style={{ position: "absolute", top: 150, left: 0, right: 0, display: "flex", justifyContent: "center" }}>
         <LabelBadge text="KALAU LANGSUNG DICOLOK:" variant="danger" fontSize={38} delay={2} />
       </div>
 
       {/* Inset pojok kiri seperti referensi */}
-      <div style={{ position: "absolute", top: 320, left: 50 }}>
-        <Inset title="STEKER → COLOKAN" caption="GERAK LAMBAT" delay={10} width={280} height={200}>
-          <PlugSocket width={220} inserted={1} />
+      <div style={{ position: "absolute", top: 300, left: 50 }}>
+        <Inset titleParts={["STEKER", "COLOKAN"]} caption="GERAK LAMBAT" delay={10} width={300} height={180}>
+          <PlugSocket width={280} inserted={1} />
         </Inset>
       </div>
 

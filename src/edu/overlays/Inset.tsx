@@ -2,10 +2,14 @@ import React from "react";
 import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { palette } from "../palette";
 import { fontFamily_Inter } from "../../loadFonts";
+import { Arrow } from "./Arrow";
 
 export type InsetProps = {
-  /** Judul kecil di atas kotak (mis. "STEKER → COLOKAN") */
+  /** Judul kecil di atas kotak (mis. "STEKER") */
   title?: string;
+  /** Jika diisi, bagian judul dirangkai dengan panah SVG di antaranya
+   *  (mis. ["STEKER", "COLOKAN"] -> STEKER → COLOKAN). */
+  titleParts?: string[];
   /** Caption kecil di bawah kotak (mis. "GERAK LAMBAT") */
   caption?: string;
   width?: number;
@@ -21,6 +25,7 @@ export type InsetProps = {
  */
 export const Inset: React.FC<InsetProps> = ({
   title,
+  titleParts,
   caption,
   width = 320,
   height = 240,
@@ -47,7 +52,7 @@ export const Inset: React.FC<InsetProps> = ({
         ...style,
       }}
     >
-      {title && (
+      {(title || titleParts) && (
         <div
           style={{
             backgroundColor: palette.caption,
@@ -56,9 +61,19 @@ export const Inset: React.FC<InsetProps> = ({
             fontSize: 24,
             padding: "6px 14px",
             borderRadius: 8,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
           }}
         >
-          {title}
+          {titleParts
+            ? titleParts.map((part, i) => (
+                <React.Fragment key={i}>
+                  {i > 0 && <Arrow size={22} color={palette.textLight} />}
+                  <span>{part}</span>
+                </React.Fragment>
+              ))
+            : title}
         </div>
       )}
       <div
