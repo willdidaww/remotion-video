@@ -4,6 +4,7 @@ import { TextAnimation } from "./compositions/TextAnimation";
 import { ConceptExplainer } from "./compositions/ConceptExplainer";
 import { FridgeExplainer } from "./edu/FridgeExplainer";
 import { SkyExplainer } from "./sky/SkyExplainer";
+import { IceExplainer } from "./ice/IceExplainer";
 
 const FPS = 30;
 const WIDTH = 1920;
@@ -50,6 +51,16 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="SkyExplainer"
         component={SkyExplainer}
+        durationInFrames={50 * FPS}
+        fps={FPS}
+        width={1080}
+        height={1920}
+      />
+
+      {/* Video edukatif 3: "Kenapa es mengapung?" — vertikal 9:16, 50 detik */}
+      <Composition
+        id="IceExplainer"
+        component={IceExplainer}
         durationInFrames={50 * FPS}
         fps={FPS}
         width={1080}
