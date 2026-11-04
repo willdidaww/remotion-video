@@ -5,6 +5,7 @@ import { ConceptExplainer } from "./compositions/ConceptExplainer";
 import { FridgeExplainer } from "./edu/FridgeExplainer";
 import { SkyExplainer } from "./sky/SkyExplainer";
 import { IceExplainer } from "./ice/IceExplainer";
+import { IceCrystal3D } from "./ice3d/IceCrystal3D";
 
 const FPS = 30;
 const WIDTH = 1920;
@@ -65,6 +66,16 @@ export const RemotionRoot: React.FC = () => {
         fps={FPS}
         width={1080}
         height={1920}
+      />
+
+      {/* Kristal es 3D (Three.js) — landscape 16:9, 12 detik */}
+      <Composition
+        id="IceCrystal3D"
+        component={IceCrystal3D}
+        durationInFrames={12 * FPS}
+        fps={FPS}
+        width={1920}
+        height={1080}
       />
     </>
   );
