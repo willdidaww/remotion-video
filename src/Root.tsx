@@ -3,6 +3,7 @@ import { Composition } from "remotion";
 import { TextAnimation } from "./compositions/TextAnimation";
 import { ConceptExplainer } from "./compositions/ConceptExplainer";
 import { FridgeExplainer } from "./edu/FridgeExplainer";
+import { SkyExplainer } from "./sky/SkyExplainer";
 
 const FPS = 30;
 const WIDTH = 1920;
@@ -40,6 +41,16 @@ export const RemotionRoot: React.FC = () => {
         id="FridgeExplainer"
         component={FridgeExplainer}
         durationInFrames={21 * FPS}
+        fps={FPS}
+        width={1080}
+        height={1920}
+      />
+
+      {/* Video edukatif 2: "Kenapa langit biru?" — vertikal 9:16, 20 detik */}
+      <Composition
+        id="SkyExplainer"
+        component={SkyExplainer}
+        durationInFrames={50 * FPS}
         fps={FPS}
         width={1080}
         height={1920}
