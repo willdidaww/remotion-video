@@ -1,0 +1,26 @@
+{
+  "name": "remotion-explainer",
+  "version": "1.0.0",
+  "description": "Motion graphic programatik untuk video penjelasan konsep & animasi teks menggunakan Remotion",
+  "license": "MIT",
+  "scripts": {
+    "dev": "remotion studio",
+    "render": "remotion render",
+    "render:text": "remotion render TextAnimation out/text-animation.mp4",
+    "render:concept": "remotion render ConceptExplainer out/concept-explainer.mp4",
+    "upgrade": "remotion upgrade",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/google-fonts": "4.0.537",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "remotion": "4.0.537"
+  },
+  "devDependencies": {
+    "@remotion/cli": "4.0.537",
+    "@types/react": "19.0.0",
+    "@types/web": "0.0.166",
+    "typescript": "5.5.4"
+  }
+}
