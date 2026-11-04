@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kristal Es Heksagonal 3D</title>
+  <style>
+    :root {
+      --ink: #0e1a2b;
+      --panel: rgba(255, 255, 255, 0.92);
+      --accent: #2e7fb8;
+      --accent-hi: #4be3c8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at 50% 30%, #1b3c5a 0%, #0a1826 70%);
+      color: #eaf6fb;
+    }
+    #app { position: fixed; inset: 0; }
+    canvas { display: block; }
+
+    /* Judul */
+    .title {
+      position: fixed; top: 24px; left: 24px; right: 24px;
+      pointer-events: none; z-index: 10;
+    }
+    .title h1 { font-size: clamp(22px, 4vw, 34px); font-weight: 800; letter-spacing: 0.3px; }
+    .title p { font-size: clamp(13px, 2.4vw, 16px); opacity: 0.8; margin-top: 4px; }
+
+    /* Panel kontrol */
+    .panel {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+      background: var(--panel); color: var(--ink);
+      padding: 12px 14px; border-radius: 16px; z-index: 10;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+      max-width: calc(100% - 32px);
+    }
+    .btn {
+      border: 2px solid #d4dde8; background: #fff; color: var(--ink);
+      font: inherit; font-weight: 700; font-size: 14px;
+      padding: 10px 16px; border-radius: 10px; cursor: pointer;
+      transition: all 0.15s ease; white-space: nowrap;
+    }
+    .btn:hover { border-color: var(--accent); }
+    .btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* Legenda */
+    .legend {
+      position: fixed; top: 24px; right: 24px; z-index: 10;
+      background: var(--panel); color: var(--ink);
+      padding: 12px 14px; border-radius: 14px; font-size: 13px; font-weight: 600;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    }
+    .legend .row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+    .dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+    .hint {
+      position: fixed; bottom: 92px; left: 50%; transform: translateX(-50%);
+      font-size: 12px; opacity: 0.6; z-index: 10; pointer-events: none;
+      transition: opacity 0.5s;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <div class="title">
+    <h1>Kristal Es Heksagonal 3D</h1>
+    <p>Struktur molekul air saat membeku (ice Ih) — drag untuk memutar, scroll untuk zoom.</p>
+  </div>
+
+  <div class="legend">
+    <div class="row"><span class="dot" style="background:#e8504a"></span> Oksigen (O)</div>
+    <div class="row"><span class="dot" style="background:#ffffff;border:1px solid #c0ccd8"></span> Hidrogen (H)</div>
+    <div class="row"><span class="dot" style="background:#7fd0ff"></span> Ikatan hidrogen</div>
+  </div>
+
+  <div class="hint" id="hint">💡 Perhatikan rongga heksagon di tengah — itu sebabnya es lebih renggang.</div>
+
+  <div class="panel">
+    <button class="btn active" id="btn-rotate">⏸ Rotasi otomatis</button>
+    <button class="btn active" id="btn-bonds">Ikatan hidrogen</button>
+    <button class="btn" id="btn-cavity">✨ Highlight rongga</button>
+    <button class="btn" id="btn-reset">↺ Reset kamera</button>
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+    /* ===================== Setup dasar ===================== */
+    const app = document.getElementById("app");
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x0a1826, 0.018);
+
+    const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 1000);
+    const CAM_START = new THREE.Vector3(14, 10, 20);
+    camera.position.copy(CAM_START);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    app.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.minDistance = 8;
+    controls.maxDistance = 60;
+    controls.target.set(0, 0, 0);
+
+    /* ===================== Pencahayaan ===================== */
+    scene.add(new THREE.AmbientLight(0xbfd8ff, 0.55));
+    const key = new THREE.DirectionalLight(0xffffff, 1.4);
+    key.position.set(12, 20, 10);
+    key.castShadow = true;
+    key.shadow.mapSize.set(1024, 1024);
+    key.shadow.camera.near = 1;
+    key.shadow.camera.far = 80;
+    key.shadow.camera.left = key.shadow.camera.bottom = -30;
+    key.shadow.camera.right = key.shadow.camera.top = 30;
+    scene.add(key);
+    const rim = new THREE.DirectionalLight(0x4be3c8, 0.5);
+    rim.position.set(-14, -6, -10);
+    scene.add(rim);
+
+    /* ===================== Material ===================== */
+    const matO = new THREE.MeshStandardMaterial({ color: 0xe8504a, roughness: 0.35, metalness: 0.05 });
+    const matH = new THREE.MeshStandardMaterial({ color: 0xf2f6fa, roughness: 0.5, metalness: 0 });
+    const matBond = new THREE.MeshStandardMaterial({
+      color: 0x7fd0ff, roughness: 0.3, metalness: 0.1,
+      transparent: true, opacity: 0.55, emissive: 0x2a5a7a, emissiveIntensity: 0.3,
+    });
+
+    const geoO = new THREE.SphereGeometry(0.62, 32, 32);
+    const geoH = new THREE.SphereGeometry(0.3, 24, 24);
+
+    /* ===================== Kisi heksagonal (ice Ih) =====================
+       Kisi es nyata = tumpukan lapisan "chair" heksagonal.
+       Kita bangun kisi sarang lebah (honeycomb) di bidang XZ, lalu tumpuk
+       beberapa lapisan ke sumbu Y dengan sedikit offset — cukup untuk
+       memperlihatkan pola heksagon berongga secara 3D. */
+
+    const molecules = [];      // {group, O: Vector3 world}
+    const bondMeshes = [];
+    const cavityMeshes = [];
+    const moleculeGroup = new THREE.Group();
+    scene.add(moleculeGroup);
+
+    const A = 2.6;             // jarak antar molekul
+    const SQ3 = Math.sqrt(3);
+    const LAYERS = 3;
+    const RINGS = 2;           // radius kisi (dalam sel)
+
+    // Buat satu molekul air (O + 2H) menghadap arah acak-stabil
+    function makeMolecule(pos, seed) {
+      const g = new THREE.Group();
+      const o = new THREE.Mesh(geoO, matO);
+      o.castShadow = true; o.receiveShadow = true;
+      g.add(o);
+
+      // Dua hidrogen dengan sudut ~104.5°
+      const half = (104.5 * Math.PI) / 180 / 2;
+      const len = 0.95;
+      const baseAngle = seed * 2.399; // golden-ish, variasi orientasi
+      [-half, half].forEach((a) => {
+        const h = new THREE.Mesh(geoH, matH);
+        h.castShadow = true;
+        h.position.set(Math.cos(baseAngle + a) * len, Math.sin(seed) * 0.3, Math.sin(baseAngle + a) * len);
+        g.add(h);
+        // batang O–H
+        const stick = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.08, 0.08, len, 12),
+          matH
+        );
+        stick.position.copy(h.position).multiplyScalar(0.5);
+        stick.quaternion.setFromUnitVectors(
+          new THREE.Vector3(0, 1, 0),
+          h.position.clone().normalize()
+        );
+        g.add(stick);
+      });
+
+      g.position.copy(pos);
+      moleculeGroup.add(g);
+      molecules.push({ group: g, pos: pos.clone() });
+    }
+
+    // Posisi honeycomb di bidang XZ untuk satu lapisan
+    function layerPositions(y, parity) {
+      const pts = [];
+      for (let q = -RINGS; q <= RINGS; q++) {
+        for (let r = -RINGS; r <= RINGS; r++) {
+          // koordinat aksial -> kartesian (pointy-top hex)
+          const x = A * SQ3 * (q + r / 2);
+          const z = A * 1.5 * r;
+          if (Math.hypot(x, z) > A * 3.2) continue;
+          // dua simpul per sel untuk membentuk cincin heksagon
+          pts.push(new THREE.Vector3(x, y, z));
+          pts.push(new THREE.Vector3(x, y, z + A * (parity ? 0.9 : -0.9)));
+        }
+      }
+      return pts;
+    }
+
+    let seed = 0;
+    for (let l = 0; l < LAYERS; l++) {
+      const y = (l - (LAYERS - 1) / 2) * A * 1.7;
+      const pts = layerPositions(y, l % 2 === 0);
+      pts.forEach((p) => makeMolecule(p, seed++));
+    }
+
+    /* ===================== Ikatan hidrogen =====================
+       Hubungkan pasangan molekul yang jaraknya mendekati jarak ikatan. */
+    const BOND_MIN = A * 0.7;
+    const BOND_MAX = A * 1.25;
+    const cylGeo = new THREE.CylinderGeometry(0.11, 0.11, 1, 10);
+
+    for (let i = 0; i < molecules.length; i++) {
+      for (let j = i + 1; j < molecules.length; j++) {
+        const a = molecules[i].pos, b = molecules[j].pos;
+        const d = a.distanceTo(b);
+        if (d < BOND_MIN || d > BOND_MAX) continue;
+        const bond = new THREE.Mesh(cylGeo, matBond);
+        bond.position.copy(a).add(b).multiplyScalar(0.5);
+        bond.scale.y = d;
+        bond.quaternion.setFromUnitVectors(
+          new THREE.Vector3(0, 1, 0),
+          b.clone().sub(a).normalize()
+        );
+        moleculeGroup.add(bond);
+        bondMeshes.push(bond);
+      }
+    }
+
+    /* ===================== Highlight rongga =====================
+       Tempatkan bola tembus pandang bercahaya di pusat beberapa cincin
+       heksagon (sumbu tengah tiap lapisan) untuk menandai ruang kosong. */
+    const cavityMat = new THREE.MeshStandardMaterial({
+      color: 0x4be3c8, transparent: true, opacity: 0, emissive: 0x4be3c8,
+      emissiveIntensity: 0.6, roughness: 0.2,
+    });
+    const cavityGeo = new THREE.SphereGeometry(0.9, 20, 20);
+    for (let l = 0; l < LAYERS; l++) {
+      const y = (l - (LAYERS - 1) / 2) * A * 1.7;
+      [[0, 0], [A * SQ3, 0], [-A * SQ3, 0], [0, A * 2.6], [0, -A * 2.6]].forEach(([x, z]) => {
+        const c = new THREE.Mesh(cavityGeo, cavityMat.clone());
+        c.position.set(x, y, z);
+        moleculeGroup.add(c);
+        cavityMeshes.push(c);
+      });
+    }
+
+    /* ===================== Lantai (bayangan lembut) ===================== */
+    const floor = new THREE.Mesh(
+      new THREE.CircleGeometry(40, 48),
+      new THREE.ShadowMaterial({ opacity: 0.25 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -LAYERS * A * 1.1;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    /* ===================== Kontrol UI ===================== */
+    let autoRotate = true;
+    let showBonds = true;
+    let showCavity = false;
+    let cavityPulse = 0;
+
+    const btnRotate = document.getElementById("btn-rotate");
+    const btnBonds = document.getElementById("btn-bonds");
+    const btnCavity = document.getElementById("btn-cavity");
+    const btnReset = document.getElementById("btn-reset");
+    const hint = document.getElementById("hint");
+
+    btnRotate.onclick = () => {
+      autoRotate = !autoRotate;
+      btnRotate.classList.toggle("active", autoRotate);
+      btnRotate.textContent = autoRotate ? "⏸ Rotasi otomatis" : "▶ Rotasi otomatis";
+    };
+    btnBonds.onclick = () => {
+      showBonds = !showBonds;
+      btnBonds.classList.toggle("active", showBonds);
+      bondMeshes.forEach((m) => (m.visible = showBonds));
+    };
+    btnCavity.onclick = () => {
+      showCavity = !showCavity;
+      btnCavity.classList.toggle("active", showCavity);
+    };
+    btnReset.onclick = () => {
+      camera.position.copy(CAM_START);
+      controls.target.set(0, 0, 0);
+    };
+
+    // Sembunyikan hint setelah interaksi pertama
+    let interacted = false;
+    controls.addEventListener("start", () => {
+      if (!interacted) { interacted = true; hint.style.opacity = "0"; }
+    });
+
+    /* ===================== Loop animasi ===================== */
+    addEventListener("resize", () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    });
+
+    const clock = new THREE.Clock();
+    function animate() {
+      requestAnimationFrame(animate);
+      const dt = clock.getDelta();
+
+      if (autoRotate) moleculeGroup.rotation.y += dt * 0.25;
+
+      // Animasi highlight rongga (pulsa fade)
+      cavityPulse += dt;
+      const targetOp = showCavity ? 0.28 + Math.sin(cavityPulse * 2) * 0.12 : 0;
+      cavityMeshes.forEach((c) => {
+        c.material.opacity += (targetOp - c.material.opacity) * 0.1;
+        const s = showCavity ? 1 + Math.sin(cavityPulse * 2) * 0.08 : 1;
+        c.scale.setScalar(s);
+      });
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
